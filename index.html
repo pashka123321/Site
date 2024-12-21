@@ -343,66 +343,78 @@
             });
             
             function enableDragAndDrop() {
-                const shortcutsContainerLeft = document.getElementById('shortcutsContainerLeft');
-                const shortcutsContainerRight = document.getElementById('shortcutsContainerRight');
+            const shortcutsContainerLeft = document.getElementById('shortcutsContainerLeft');
+            const shortcutsContainerRight = document.getElementById('shortcutsContainerRight');
 
-                let draggedShortcut = null;
-                let originalContainer = null;
+            let draggedShortcut = null;
 
-                function onDragStart(event) {
-                    draggedShortcut = event.target;
-                    originalContainer = draggedShortcut.parentElement;
-                    setTimeout(() => draggedShortcut.style.display = "none", 0);
-                }
+            function onDragStart(event) {
+                draggedShortcut = event.target;
+                setTimeout(() => draggedShortcut.style.display = "none", 0);
+            }
 
-                function onDragOver(event) {
-                    event.preventDefault(); // Позволяет сброс объекта
-                }
+            function onDragOver(event) {
+                event.preventDefault(); // Позволяет сброс объекта
+            }
 
-                function onDrop(event) {
-                    event.preventDefault();
+            function onDrop(event) {
+                event.preventDefault();
+
+                // Проверяем, является ли целевой элемент допустимым контейнером
+                const targetContainer = event.currentTarget;
+                if (targetContainer.classList.contains('shortcuts-container')) {
                     if (draggedShortcut) {
                         draggedShortcut.style.display = "flex"; // Восстанавливаем отображение
-                        event.currentTarget.insertBefore(draggedShortcut, event.target.classList.contains('shortcut') ? event.target : null);
-                        
+
+                        // Добавляем ярлык перед кнопкой добавления или в конец, если контейнер пуст
+                        const addShortcutButton = targetContainer.querySelector('.add-shortcut');
+                        targetContainer.insertBefore(draggedShortcut, addShortcutButton);
+
+                        // Обновляем localStorage
                         updateLocalStorage();
+
+                        // Перезагружаем страницу, чтобы обновить состояние
+                        location.reload();
                     }
                 }
-
-                function onDragEnd() {
-                    draggedShortcut.style.display = "flex";
-                    draggedShortcut = null;
-                    originalContainer = null;
-                }
-
-                function updateLocalStorage() {
-                    const shortcutsLeft = Array.from(shortcutsContainerLeft.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
-                        name: shortcut.textContent.trim(),
-                        url: shortcut.getAttribute('data-url')
-                    }));
-
-                    const shortcutsRight = Array.from(shortcutsContainerRight.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
-                        name: shortcut.textContent.trim(),
-                        url: shortcut.getAttribute('data-url')
-                    }));
-
-                    localStorage.setItem('shortcuts', JSON.stringify({ left: shortcutsLeft, right: shortcutsRight }));
-                }
-
-                function addDragAndDropListeners(container) {
-                    container.addEventListener('dragover', onDragOver);
-                    container.addEventListener('drop', onDrop);
-
-                    container.querySelectorAll('.shortcut').forEach(shortcut => {
-                        shortcut.setAttribute('draggable', true);
-                        shortcut.addEventListener('dragstart', onDragStart);
-                        shortcut.addEventListener('dragend', onDragEnd);
-                    });
-                }
-
-                addDragAndDropListeners(shortcutsContainerLeft);
-                addDragAndDropListeners(shortcutsContainerRight);
             }
+
+            function onDragEnd() {
+                if (draggedShortcut) {
+                    draggedShortcut.style.display = "flex"; // Восстанавливаем отображение
+                }
+                draggedShortcut = null;
+            }
+
+            function updateLocalStorage() {
+                const shortcutsLeft = Array.from(shortcutsContainerLeft.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
+                    name: shortcut.textContent.trim(),
+                    url: shortcut.getAttribute('data-url')
+                }));
+
+                const shortcutsRight = Array.from(shortcutsContainerRight.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
+                    name: shortcut.textContent.trim(),
+                    url: shortcut.getAttribute('data-url')
+                }));
+
+                localStorage.setItem('shortcuts', JSON.stringify({ left: shortcutsLeft, right: shortcutsRight }));
+            }
+
+            function addDragAndDropListeners(container) {
+                container.addEventListener('dragover', onDragOver);
+                container.addEventListener('drop', onDrop);
+
+                container.querySelectorAll('.shortcut').forEach(shortcut => {
+                    shortcut.setAttribute('draggable', true);
+                    shortcut.addEventListener('dragstart', onDragStart);
+                    shortcut.addEventListener('dragend', onDragEnd);
+                });
+            }
+
+            addDragAndDropListeners(shortcutsContainerLeft);
+            addDragAndDropListeners(shortcutsContainerRight);
+        }
+
 
             // Вызов функции после загрузки ярлыков
             loadShortcuts = (function(originalLoadShortcuts) {
