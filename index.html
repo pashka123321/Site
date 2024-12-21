@@ -30,18 +30,18 @@
       text-align: center;
     }
 
-    .search-container input[type="text"] {
+    .search-box {
       width: 400px;
       padding: 15px;
       border: none;
-      border-radius: 30px;
+      border-radius: 25px;
       font-size: 16px;
-      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
-      outline: none;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
     }
 
-    .search-container input[type="text"]::placeholder {
-      color: #aaa;
+    .search-box:focus {
+      outline: none;
+      box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
     }
   </style>
 </head>
@@ -52,9 +52,24 @@
   </video>
 
   <div class="search-container">
-    <form action="https://www.google.com/search" method="GET">
-      <input type="text" name="q" placeholder="Search Google..." autofocus>
-    </form>
+    <input 
+      class="search-box" 
+      type="text" 
+      id="searchInput" 
+      placeholder="Search Google..." 
+      onkeydown="handleSearch(event)"
+    >
   </div>
+
+  <script>
+    function handleSearch(event) {
+      if (event.key === 'Enter') {
+        const query = document.getElementById('searchInput').value;
+        if (query.trim()) {
+          window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        }
+      }
+    }
+  </script>
 </body>
 </html>
