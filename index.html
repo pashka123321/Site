@@ -83,6 +83,20 @@
                 box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
                 backdrop-filter: blur(10px);
                 position: relative;
+                flex-direction: column;
+            }
+
+            .shortcut img {
+                width: 40px; /* Размер иконки */
+                height: 40px;
+                margin-bottom: 5px; /* Отступ между иконкой и текстом */
+            }
+
+            .shortcut span {
+                word-wrap: break-word; /* Чтобы длинные названия переносились */
+                font-size: 11px; /* Размер текста под иконкой */
+                color: rgba(255, 255, 255, 0.9); /* Немного приглушённый белый */
+                text-align: center;
             }
 
             .add-shortcut {
@@ -191,6 +205,15 @@
             .context-menu-item:hover {
                 background: rgba(255, 255, 255, 0.1);
             }
+            
+            .shortcut.placeholder {
+                border: 2px dashed #aaa;
+                background: #f9f9f9;
+                height: 40px;
+                margin: 5px 0;
+                box-sizing: border-box;
+            }
+
         </style>
     </head>
     <body>
@@ -251,16 +274,20 @@
                 const storedShortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
     
                 shortcutsContainerLeft.innerHTML = storedShortcuts.left.map((shortcut, index) => `
-                    <div class="shortcut" onclick="window.open('${shortcut.url}', '_blank')" oncontextmenu="openContextMenu(event, ${index}, 'left')">
-                        ${shortcut.name}
+                    <div class="shortcut" data-url="${shortcut.url}" onclick="window.open('${shortcut.url}', '_blank')" oncontextmenu="openContextMenu(event, ${index}, 'left')">
+                        <img src="${shortcut.url}/favicon.ico" alt="${shortcut.name}" onerror="this.style.display='none'" style="width: 32px; height: 32px; margin-bottom: 5px;">
+                        <span>${shortcut.name}</span>
                     </div>
                 `).join('') + '<div class="add-shortcut" onclick="addShortcut(\'left\')">+</div>';
-    
+
                 shortcutsContainerRight.innerHTML = storedShortcuts.right.map((shortcut, index) => `
-                    <div class="shortcut" onclick="window.open('${shortcut.url}', '_blank')" oncontextmenu="openContextMenu(event, ${index}, 'right')">
-                        ${shortcut.name}
+                    <div class="shortcut" data-url="${shortcut.url}" onclick="window.open('${shortcut.url}', '_blank')" oncontextmenu="openContextMenu(event, ${index}, 'right')">
+                        <img src="${shortcut.url}/favicon.ico" alt="${shortcut.name}" onerror="this.style.display='none'" style="width: 32px; height: 32px; margin-bottom: 5px;">
+                        <span>${shortcut.name}</span>
                     </div>
                 `).join('') + '<div class="add-shortcut" onclick="addShortcut(\'right\')">+</div>';
+
+
             }
     
             function addShortcut(side) {
@@ -346,86 +373,105 @@
             });
             
             function enableDragAndDrop() {
-            const shortcutsContainerLeft = document.getElementById('shortcutsContainerLeft');
-            const shortcutsContainerRight = document.getElementById('shortcutsContainerRight');
+    const shortcutsContainerLeft = document.getElementById('shortcutsContainerLeft');
+    const shortcutsContainerRight = document.getElementById('shortcutsContainerRight');
 
-            let draggedShortcut = null;
+    let draggedShortcut = null;
+    let placeholder = document.createElement('div');
+    placeholder.className = 'shortcut placeholder'; // Стиль для визуального отображения
 
-            function onDragStart(event) {
-                draggedShortcut = event.target;
-                setTimeout(() => draggedShortcut.style.display = "none", 0);
+    function onDragStart(event) {
+        draggedShortcut = event.currentTarget; // Убедимся, что берется сам .shortcut, а не его вложенные элементы
+        placeholder.style.height = `${draggedShortcut.offsetHeight}px`;
+        placeholder.style.width = `${draggedShortcut.offsetWidth}px`;
+        setTimeout(() => draggedShortcut.style.display = "none", 0);
+    }
+
+    function onDragOver(event) {
+        event.preventDefault();
+
+        const targetContainer = event.currentTarget;
+        const shortcuts = Array.from(targetContainer.querySelectorAll('.shortcut:not(.placeholder):not(.add-shortcut)'));
+        const addShortcutButton = targetContainer.querySelector('.add-shortcut');
+
+        let insertBeforeElement = null;
+
+        // Найти место, где должен появиться ярлык
+        for (const shortcut of shortcuts) {
+            const rect = shortcut.getBoundingClientRect();
+            if (event.clientY < rect.top + rect.height / 2) {
+                insertBeforeElement = shortcut;
+                break;
             }
-
-            function onDragOver(event) {
-                event.preventDefault(); // Позволяет сброс объекта
-            }
-
-            function onDrop(event) {
-                event.preventDefault();
-
-                // Проверяем, является ли целевой элемент допустимым контейнером
-                const targetContainer = event.currentTarget;
-                if (targetContainer.classList.contains('shortcuts-container')) {
-                    if (draggedShortcut) {
-                        draggedShortcut.style.display = "flex"; // Восстанавливаем отображение
-
-                        // Добавляем ярлык перед кнопкой добавления или в конец, если контейнер пуст
-                        const addShortcutButton = targetContainer.querySelector('.add-shortcut');
-                        targetContainer.insertBefore(draggedShortcut, addShortcutButton);
-
-                        // Обновляем localStorage
-                        updateLocalStorage();
-
-                        // Перезагружаем страницу, чтобы обновить состояние
-                        location.reload();
-                    }
-                }
-            }
-
-            function onDragEnd() {
-                if (draggedShortcut) {
-                    draggedShortcut.style.display = "flex"; // Восстанавливаем отображение
-                }
-                draggedShortcut = null;
-            }
-
-            function updateLocalStorage() {
-                const shortcutsLeft = Array.from(shortcutsContainerLeft.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
-                    name: shortcut.textContent.trim(),
-                    url: shortcut.getAttribute('data-url')
-                }));
-
-                const shortcutsRight = Array.from(shortcutsContainerRight.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
-                    name: shortcut.textContent.trim(),
-                    url: shortcut.getAttribute('data-url')
-                }));
-
-                localStorage.setItem('shortcuts', JSON.stringify({ left: shortcutsLeft, right: shortcutsRight }));
-            }
-
-            function addDragAndDropListeners(container) {
-                container.addEventListener('dragover', onDragOver);
-                container.addEventListener('drop', onDrop);
-
-                container.querySelectorAll('.shortcut').forEach(shortcut => {
-                    shortcut.setAttribute('draggable', true);
-                    shortcut.addEventListener('dragstart', onDragStart);
-                    shortcut.addEventListener('dragend', onDragEnd);
-                });
-            }
-
-            addDragAndDropListeners(shortcutsContainerLeft);
-            addDragAndDropListeners(shortcutsContainerRight);
         }
 
+        // Вставить placeholder
+        if (insertBeforeElement) {
+            targetContainer.insertBefore(placeholder, insertBeforeElement);
+        } else {
+            targetContainer.insertBefore(placeholder, addShortcutButton);
+        }
+    }
 
-            // Вызов функции после загрузки ярлыков
-            loadShortcuts = (function(originalLoadShortcuts) {
-                return function() {
-                    originalLoadShortcuts();
-                    enableDragAndDrop();
-                };
-            })(loadShortcuts);
+    function onDrop(event) {
+        event.preventDefault();
+
+        const targetContainer = event.currentTarget;
+
+        if (draggedShortcut) {
+            draggedShortcut.style.display = "flex"; // Восстанавливаем отображение
+            targetContainer.insertBefore(draggedShortcut, placeholder); // Вставляем ярлык вместо placeholder
+            placeholder.remove(); // Убираем placeholder
+            updateLocalStorage(); // Обновляем данные в LocalStorage
+            loadShortcuts(); // Обновляем интерфейс после изменения
+        }
+    }
+
+    function onDragEnd() {
+        if (draggedShortcut) {
+            draggedShortcut.style.display = "flex";
+        }
+        draggedShortcut = null;
+        placeholder.remove(); // Убираем placeholder при завершении
+    }
+
+    function updateLocalStorage() {
+        const shortcutsLeft = Array.from(shortcutsContainerLeft.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
+            name: shortcut.querySelector('span').textContent.trim(),
+            url: shortcut.getAttribute('data-url')
+        }));
+
+        const shortcutsRight = Array.from(shortcutsContainerRight.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
+            name: shortcut.querySelector('span').textContent.trim(),
+            url: shortcut.getAttribute('data-url')
+        }));
+
+        localStorage.setItem('shortcuts', JSON.stringify({ left: shortcutsLeft, right: shortcutsRight }));
+    }
+
+    function addDragAndDropListeners(container) {
+        container.addEventListener('dragover', onDragOver);
+        container.addEventListener('drop', onDrop);
+
+        container.querySelectorAll('.shortcut').forEach(shortcut => {
+            shortcut.setAttribute('draggable', true);
+            shortcut.addEventListener('dragstart', onDragStart);
+            shortcut.addEventListener('dragend', onDragEnd);
+        });
+    }
+
+    addDragAndDropListeners(shortcutsContainerLeft);
+    addDragAndDropListeners(shortcutsContainerRight);
+}
+
+loadShortcuts = (function(originalLoadShortcuts) {
+    return function() {
+        originalLoadShortcuts(); // Загружаем ярлыки
+        enableDragAndDrop(); // Применяем drag-and-drop к новым ярлыкам
+    };
+})(loadShortcuts);
+
+
 
             loadShortcuts();
         </script>
