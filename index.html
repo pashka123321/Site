@@ -7,6 +7,10 @@
       padding: 0;
       height: 100%;
       overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: Arial, sans-serif;
     }
     video {
       position: absolute;
@@ -17,6 +21,24 @@
       min-width: 100%;
       min-height: 100%;
       transform: translate(-50%, -50%);
+      z-index: -1;
+    }
+    .search-container {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+    }
+    .search-input {
+      width: 300px;
+      padding: 10px;
+      border: 2px solid #fff;
+      border-radius: 25px;
+      outline: none;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    .search-input:focus {
+      border-color: #0078ff;
     }
   </style>
 </head>
@@ -25,5 +47,22 @@
     <source src="test.mp4" type="video/mp4">
     Your browser does not support the video tag.
   </video>
+
+  <div class="search-container">
+    <input 
+      type="text" 
+      class="search-input" 
+      placeholder="Search Google..." 
+      onkeydown="if (event.key === 'Enter') searchGoogle(this.value);">
+  </div>
+
+  <script>
+    function searchGoogle(query) {
+      if (query.trim()) {
+        const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        window.open(googleSearchUrl, '_blank');
+      }
+    }
+  </script>
 </body>
 </html>
