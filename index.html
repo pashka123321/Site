@@ -183,21 +183,32 @@
 
             function addShortcut(side) {
                 const name = prompt('Введите название сайта:');
+                if (!name || !name.trim()) {
+                    alert('Название сайта не может быть пустым.');
+                    return;
+                }
+
                 let url = prompt('Введите URL сайта:');
-                if (name && url) {
-                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                        url = 'https://' + url;
-                    }
-                    const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
-                    if (shortcuts[side].length < maxShortcuts) {
-                        shortcuts[side].push({ name, url });
-                        localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
-                        loadShortcuts();
-                    } else {
-                        alert('Максимальное количество ярлыков: ' + maxShortcuts);
-                    }
+                if (!url || !url.trim()) {
+                    alert('URL сайта не может быть пустым.');
+                    return;
+                }
+
+                // Добавляем протокол, если его нет
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                }
+
+                const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
+                if (shortcuts[side].length < maxShortcuts) {
+                    shortcuts[side].push({ name, url });
+                    localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+                    loadShortcuts();
+                } else {
+                    alert('Максимальное количество ярлыков: ' + maxShortcuts);
                 }
             }
+
 
             function editShortcut() {
                 const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
