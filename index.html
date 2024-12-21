@@ -101,27 +101,67 @@
                 backdrop-filter: blur(10px);
             }
 
-            .context-menu {
-                position: absolute;
-                background: rgba(50, 50, 50, 0.9);
+            .settings-button {
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                background-color: rgba(0, 0, 0, 0.7);
                 color: white;
-                border-radius: 5px;
-                display: none;
-                flex-direction: column;
-                z-index: 10;
-                padding: 10px 0;
-                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-            }
-
-            .context-menu-item {
-                padding: 5px 15px;
+                border: none;
+                border-radius: 50%;
                 cursor: pointer;
-                font-size: 14px;
-                text-align: left;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+                font-size: 24px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
 
-            .context-menu-item:hover {
+            .settings-button:hover {
+                background-color: rgba(0, 0, 0, 0.9);
+            }
+
+            .settings-menu {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.8);
+                color: white;
+                display: none;
+                justify-content: center;
+                align-items: center;
+                z-index: 100;
+            }
+
+            .settings-menu.active {
+                display: flex;
+            }
+
+            .settings-menu-content {
                 background: rgba(255, 255, 255, 0.1);
+                border-radius: 10px;
+                padding: 20px;
+                text-align: center;
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+            }
+
+            .settings-menu-content button {
+                background-color: rgba(255, 0, 0, 0.8);
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 10px 20px;
+                font-size: 16px;
+                cursor: pointer;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+            }
+
+            .settings-menu-content button:hover {
+                background-color: rgba(255, 0, 0, 1);
             }
         </style>
     </head>
@@ -141,26 +181,30 @@
             <!-- Ярлыки будут добавляться сюда -->
             <div class="add-shortcut" onclick="addShortcut('right')">+</div>
         </div>
-        <div class="context-menu" id="contextMenu">
-            <div class="context-menu-item" onclick="editShortcut()">Редактировать</div>
-            <div class="context-menu-item" onclick="deleteShortcut()">Удалить</div>
+
+        <!-- Кнопка настроек -->
+        <button class="settings-button" onclick="toggleSettingsMenu()">⚙</button>
+
+        <!-- Меню настроек -->
+        <div class="settings-menu" id="settingsMenu">
+            <div class="settings-menu-content">
+                <h3>Настройки</h3>
+                <button onclick="deleteAllShortcuts()">Удалить все ярлыки</button>
+            </div>
         </div>
 
         <script>
-            const maxShortcuts = 8;
-            let contextShortcutIndex = null;
-            let contextShortcutSide = null;
+            function toggleSettingsMenu() {
+                const settingsMenu = document.getElementById('settingsMenu');
+                settingsMenu.classList.toggle('active');
+            }
 
-            function cacheVideo() {
-                const video = document.getElementById('backgroundVideo');
-                video.addEventListener('loadeddata', () => {
-                    const cache = window.caches.open('video-cache');
-                    cache.then(cacheStorage => {
-                        fetch('test.mp4').then(response => {
-                            cacheStorage.put('test.mp4', response.clone());
-                        });
-                    });
-                });
+            function deleteAllShortcuts() {
+                if (confirm('Вы уверены, что хотите удалить все ярлыки?')) {
+                    localStorage.removeItem('shortcuts');
+                    loadShortcuts();
+                    toggleSettingsMenu();
+                }
             }
 
             function loadShortcuts() {
@@ -169,13 +213,13 @@
                 const storedShortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
 
                 shortcutsContainerLeft.innerHTML = storedShortcuts.left.map((shortcut, index) => `
-                    <div class="shortcut" oncontextmenu="openContextMenu(event, ${index}, 'left')" draggable="true" ondragstart="dragStart(event, ${index}, 'left')" ondragover="allowDrop(event)" ondrop="drop(event, ${index}, 'left')" onclick="window.open('${shortcut.url}', '_blank')">
+                    <div class="shortcut" onclick="window.open('${shortcut.url}', '_blank')">
                         ${shortcut.name}
                     </div>
                 `).join('') + '<div class="add-shortcut" onclick="addShortcut(\'left\')">+</div>';
 
                 shortcutsContainerRight.innerHTML = storedShortcuts.right.map((shortcut, index) => `
-                    <div class="shortcut" oncontextmenu="openContextMenu(event, ${index}, 'right')" draggable="true" ondragstart="dragStart(event, ${index}, 'right')" ondragover="allowDrop(event)" ondrop="drop(event, ${index}, 'right')" onclick="window.open('${shortcut.url}', '_blank')">
+                    <div class="shortcut" onclick="window.open('${shortcut.url}', '_blank')">
                         ${shortcut.name}
                     </div>
                 `).join('') + '<div class="add-shortcut" onclick="addShortcut(\'right\')">+</div>';
@@ -183,74 +227,23 @@
 
             function addShortcut(side) {
                 const name = prompt('Введите название сайта:');
-                if (!name || !name.trim()) {
-                    alert('Название сайта не может быть пустым.');
-                    return;
-                }
+                if (!name || !name.trim()) return;
 
                 let url = prompt('Введите URL сайта:');
-                if (!url || !url.trim()) {
-                    alert('URL сайта не может быть пустым.');
-                    return;
-                }
+                if (!url || !url.trim()) return;
 
-                // Добавляем протокол, если его нет
                 if (!url.startsWith('http://') && !url.startsWith('https://')) {
                     url = 'https://' + url;
                 }
 
                 const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
-                if (shortcuts[side].length < maxShortcuts) {
+                if (shortcuts[side].length < 8) {
                     shortcuts[side].push({ name, url });
                     localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
                     loadShortcuts();
                 } else {
-                    alert('Максимальное количество ярлыков: ' + maxShortcuts);
+                    alert('Максимум 8 ярлыков.');
                 }
-            }
-
-
-            function editShortcut() {
-                const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
-                const shortcut = shortcuts[contextShortcutSide][contextShortcutIndex];
-                const newName = prompt('Введите новое название сайта:', shortcut.name);
-                let newUrl = prompt('Введите новый URL сайта:', shortcut.url);
-                if (newName && newUrl) {
-                    if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
-                        newUrl = 'https://' + newUrl;
-                    }
-                    shortcut.name = newName;
-                    shortcut.url = newUrl;
-                    localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
-                    loadShortcuts();
-                }
-                closeContextMenu();
-            }
-
-            function deleteShortcut() {
-                const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
-                shortcuts[contextShortcutSide].splice(contextShortcutIndex, 1);
-                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
-                loadShortcuts();
-                closeContextMenu();
-            }
-
-            function dragStart(event, index, side) {
-                event.dataTransfer.setData('text/plain', JSON.stringify({ index, side }));
-            }
-
-            function allowDrop(event) {
-                event.preventDefault();
-            }
-
-            function drop(event, index, side) {
-                event.preventDefault();
-                const { index: fromIndex, side: fromSide } = JSON.parse(event.dataTransfer.getData('text/plain'));
-                const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
-                const movedItem = shortcuts[fromSide].splice(fromIndex, 1)[0];
-                shortcuts[side].splice(index, 0, movedItem);
-                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
-                loadShortcuts();
             }
 
             function handleSearch(event) {
@@ -262,31 +255,6 @@
                 }
             }
 
-            function openContextMenu(event, index, side) {
-                event.preventDefault();
-                contextShortcutIndex = index;
-                contextShortcutSide = side;
-                const contextMenu = document.getElementById('contextMenu');
-                contextMenu.style.top = `${event.clientY}px`;
-                contextMenu.style.left = `${event.clientX}px`;
-                contextMenu.style.display = 'flex';
-            }
-
-            function closeContextMenu() {
-                const contextMenu = document.getElementById('contextMenu');
-                contextMenu.style.display = 'none';
-                contextShortcutIndex = null;
-                contextShortcutSide = null;
-            }
-
-            document.addEventListener('click', closeContextMenu);
-            document.addEventListener('contextmenu', (event) => {
-                if (!event.target.classList.contains('shortcut')) {
-                    closeContextMenu();
-                }
-            });
-
-            cacheVideo();
             loadShortcuts();
         </script>
     </body>
