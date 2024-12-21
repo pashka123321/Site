@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <style>
+            body, html {
+                margin: 0;
+                padding: 0;
+                height: 100%;
+                overflow: hidden;
+                font-family: Arial, sans-serif;
+            }
+
+            video {
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                z-index: -1;
+                transform: translate(-50%, -50%) scale(1.2);
+                transform-origin: center;
+            }
+
+            .search-container {
+                position: absolute;
+                top: 10%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                text-align: center;
+            }
+
+            .search-box {
+                width: 400px;
+                padding: 15px;
+                border: 2px solid rgba(255, 255, 255, 0.5);
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 25px;
+                font-size: 16px;
+                color: white;
+                text-align: center;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(10px);
+            }
+
+            .search-box::placeholder {
+                color: rgba(255, 255, 255, 0.7);
+            }
+
+            .search-box:focus {
+                outline: none;
+                border: 2px solid rgba(255, 255, 255, 0.8);
+                box-shadow: 0px 4px 10px rgba(255, 255, 255, 0.5);
+            }
+
+            .shortcuts-container {
+                position: absolute;
+                bottom: 10%;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+            }
+
+            .shortcut {
+                width: 80px;
+                height: 80px;
+                background: rgba(255, 255, 255, 0.2);
+                border-radius: 15px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: white;
+                font-size: 12px;
+                text-align: center;
+                cursor: pointer;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(10px);
+                position: relative;
+            }
+
+            .add-shortcut {
+                width: 80px;
+                height: 80px;
+                background: rgba(255, 255, 255, 0.1);
+                border: 2px dashed rgba(255, 255, 255, 0.5);
+                border-radius: 15px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                color: rgba(255, 255, 255, 0.7);
+                font-size: 14px;
+                cursor: pointer;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+                backdrop-filter: blur(10px);
+            }
+
+            .context-menu {
+                position: absolute;
+                background: rgba(50, 50, 50, 0.9);
+                color: white;
+                border-radius: 5px;
+                display: none;
+                flex-direction: column;
+                z-index: 10;
+                padding: 10px 0;
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            }
+
+            .context-menu-item {
+                padding: 5px 15px;
+                cursor: pointer;
+                font-size: 14px;
+                text-align: left;
+            }
+
+            .context-menu-item:hover {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        </style>
+    </head>
+    <body>
+        <video autoplay loop muted>
+            <source src="test.mp4" type="video/mp4">
+            Ваш браузер не поддерживает видео.
+        </video>
+        <div class="search-container">
+            <input class="search-box" type="text" id="searchInput" placeholder="Введите запрос..." onkeydown="handleSearch(event)">
+        </div>
+        <div class="shortcuts-container" id="shortcutsContainer">
+            <!-- Ярлыки будут добавляться сюда -->
+            <div class="add-shortcut" onclick="addShortcut()">+</div>
+        </div>
+        <div class="context-menu" id="contextMenu">
+            <div class="context-menu-item" onclick="editShortcut()">Редактировать</div>
+            <div class="context-menu-item" onclick="deleteShortcut()">Удалить</div>
+        </div>
+
+        <script>
+            const maxShortcuts = 8;
+            let contextShortcutIndex = null;
+
+            function loadShortcuts() {
+                const shortcutsContainer = document.getElementById('shortcutsContainer');
+                const storedShortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+                shortcutsContainer.innerHTML = storedShortcuts.map((shortcut, index) => `
+                    <div class="shortcut" oncontextmenu="openContextMenu(event, ${index})" draggable="true" ondragstart="dragStart(event, ${index})" ondragover="allowDrop(event)" ondrop="drop(event, ${index})" onclick="window.open('${shortcut.url}', '_blank')">
+                        ${shortcut.name}
+                    </div>
+                `).join('') + '<div class="add-shortcut" onclick="addShortcut()">+</div>';
+            }
+
+            function addShortcut() {
+                const name = prompt('Введите название сайта:');
+                let url = prompt('Введите URL сайта:');
+                if (name && url) {
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        url = 'https://' + url;
+                    }
+                    const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
+                    if (shortcuts.length < maxShortcuts) {
+                        shortcuts.push({ name, url });
+                        localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+                        loadShortcuts();
+                    } else {
+                        alert('Максимальное количество ярлыков: ' + maxShortcuts);
+                    }
+                }
+            }
+
+            function editShortcut() {
+                const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
+                const shortcut = shortcuts[contextShortcutIndex];
+                const newName = prompt('Введите новое название сайта:', shortcut.name);
+                let newUrl = prompt('Введите новый URL сайта:', shortcut.url);
+                if (newName && newUrl) {
+                    if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+                        newUrl = 'https://' + newUrl;
+                    }
+                    shortcut.name = newName;
+                    shortcut.url = newUrl;
+                    localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+                    loadShortcuts();
+                }
+                closeContextMenu();
+            }
+
+            function deleteShortcut() {
+                const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
+                shortcuts.splice(contextShortcutIndex, 1);
+                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+                loadShortcuts();
+                closeContextMenu();
+            }
+
+            function dragStart(event, index) {
+                event.dataTransfer.setData('text/plain', index);
+            }
+
+            function allowDrop(event) {
+                event.preventDefault();
+            }
+
+            function drop(event, index) {
+                event.preventDefault();
+                const fromIndex = event.dataTransfer.getData('text/plain');
+                const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
+                const movedItem = shortcuts.splice(fromIndex, 1)[0];
+                shortcuts.splice(index, 0, movedItem);
+                localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
+                loadShortcuts();
+            }
+
+            function handleSearch(event) {
+                if (event.key === 'Enter') {
+                    const query = document.getElementById('searchInput').value;
+                    if (query.trim()) {
+                        window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+                    }
+                }
+            }
+
+            function openContextMenu(event, index) {
+                event.preventDefault();
+                contextShortcutIndex = index;
+                const contextMenu = document.getElementById('contextMenu');
+                contextMenu.style.top = `${event.clientY}px`;
+                contextMenu.style.left = `${event.clientX}px`;
+                contextMenu.style.display = 'flex';
+            }
+
+            function closeContextMenu() {
+                const contextMenu = document.getElementById('contextMenu');
+                contextMenu.style.display = 'none';
+                contextShortcutIndex = null;
+            }
+
+            document.addEventListener('click', closeContextMenu);
+            document.addEventListener('contextmenu', (event) => {
+                if (!event.target.classList.contains('shortcut')) {
+                    closeContextMenu();
+                }
+            });
+
+            loadShortcuts();
+        </script>
+    </body>
+</html>
