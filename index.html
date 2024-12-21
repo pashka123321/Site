@@ -55,13 +55,17 @@
 
             .shortcuts-container {
                 position: absolute;
-                bottom: 10%;
-                left: 50%;
-                transform: translateX(-50%);
+                top: 20%;
+                left: 10%;
                 display: flex;
                 flex-wrap: wrap;
+                flex-direction: column;
                 gap: 10px;
-                justify-content: center;
+            }
+
+            .shortcuts-container.right {
+                left: auto;
+                right: 10%;
             }
 
             .shortcut {
@@ -122,16 +126,20 @@
         </style>
     </head>
     <body>
-        <video autoplay loop muted>
+        <video autoplay loop muted id="backgroundVideo">
             <source src="test.mp4" type="video/mp4">
             Ваш браузер не поддерживает видео.
         </video>
         <div class="search-container">
             <input class="search-box" type="text" id="searchInput" placeholder="Введите запрос..." onkeydown="handleSearch(event)">
         </div>
-        <div class="shortcuts-container" id="shortcutsContainer">
+        <div class="shortcuts-container" id="shortcutsContainerLeft">
             <!-- Ярлыки будут добавляться сюда -->
-            <div class="add-shortcut" onclick="addShortcut()">+</div>
+            <div class="add-shortcut" onclick="addShortcut('left')">+</div>
+        </div>
+        <div class="shortcuts-container right" id="shortcutsContainerRight">
+            <!-- Ярлыки будут добавляться сюда -->
+            <div class="add-shortcut" onclick="addShortcut('right')">+</div>
         </div>
         <div class="context-menu" id="contextMenu">
             <div class="context-menu-item" onclick="editShortcut()">Редактировать</div>
@@ -141,27 +149,48 @@
         <script>
             const maxShortcuts = 8;
             let contextShortcutIndex = null;
+            let contextShortcutSide = null;
 
-            function loadShortcuts() {
-                const shortcutsContainer = document.getElementById('shortcutsContainer');
-                const storedShortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
-                shortcutsContainer.innerHTML = storedShortcuts.map((shortcut, index) => `
-                    <div class="shortcut" oncontextmenu="openContextMenu(event, ${index})" draggable="true" ondragstart="dragStart(event, ${index})" ondragover="allowDrop(event)" ondrop="drop(event, ${index})" onclick="window.open('${shortcut.url}', '_blank')">
-                        ${shortcut.name}
-                    </div>
-                `).join('') + '<div class="add-shortcut" onclick="addShortcut()">+</div>';
+            function cacheVideo() {
+                const video = document.getElementById('backgroundVideo');
+                video.addEventListener('loadeddata', () => {
+                    const cache = window.caches.open('video-cache');
+                    cache.then(cacheStorage => {
+                        fetch('test.mp4').then(response => {
+                            cacheStorage.put('test.mp4', response.clone());
+                        });
+                    });
+                });
             }
 
-            function addShortcut() {
+            function loadShortcuts() {
+                const shortcutsContainerLeft = document.getElementById('shortcutsContainerLeft');
+                const shortcutsContainerRight = document.getElementById('shortcutsContainerRight');
+                const storedShortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
+
+                shortcutsContainerLeft.innerHTML = storedShortcuts.left.map((shortcut, index) => `
+                    <div class="shortcut" oncontextmenu="openContextMenu(event, ${index}, 'left')" draggable="true" ondragstart="dragStart(event, ${index}, 'left')" ondragover="allowDrop(event)" ondrop="drop(event, ${index}, 'left')" onclick="window.open('${shortcut.url}', '_blank')">
+                        ${shortcut.name}
+                    </div>
+                `).join('') + '<div class="add-shortcut" onclick="addShortcut(\'left\')">+</div>';
+
+                shortcutsContainerRight.innerHTML = storedShortcuts.right.map((shortcut, index) => `
+                    <div class="shortcut" oncontextmenu="openContextMenu(event, ${index}, 'right')" draggable="true" ondragstart="dragStart(event, ${index}, 'right')" ondragover="allowDrop(event)" ondrop="drop(event, ${index}, 'right')" onclick="window.open('${shortcut.url}', '_blank')">
+                        ${shortcut.name}
+                    </div>
+                `).join('') + '<div class="add-shortcut" onclick="addShortcut(\'right\')">+</div>';
+            }
+
+            function addShortcut(side) {
                 const name = prompt('Введите название сайта:');
                 let url = prompt('Введите URL сайта:');
                 if (name && url) {
                     if (!url.startsWith('http://') && !url.startsWith('https://')) {
                         url = 'https://' + url;
                     }
-                    const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || [];
-                    if (shortcuts.length < maxShortcuts) {
-                        shortcuts.push({ name, url });
+                    const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
+                    if (shortcuts[side].length < maxShortcuts) {
+                        shortcuts[side].push({ name, url });
                         localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
                         loadShortcuts();
                     } else {
@@ -172,7 +201,7 @@
 
             function editShortcut() {
                 const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
-                const shortcut = shortcuts[contextShortcutIndex];
+                const shortcut = shortcuts[contextShortcutSide][contextShortcutIndex];
                 const newName = prompt('Введите новое название сайта:', shortcut.name);
                 let newUrl = prompt('Введите новый URL сайта:', shortcut.url);
                 if (newName && newUrl) {
@@ -189,26 +218,26 @@
 
             function deleteShortcut() {
                 const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
-                shortcuts.splice(contextShortcutIndex, 1);
+                shortcuts[contextShortcutSide].splice(contextShortcutIndex, 1);
                 localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
                 loadShortcuts();
                 closeContextMenu();
             }
 
-            function dragStart(event, index) {
-                event.dataTransfer.setData('text/plain', index);
+            function dragStart(event, index, side) {
+                event.dataTransfer.setData('text/plain', JSON.stringify({ index, side }));
             }
 
             function allowDrop(event) {
                 event.preventDefault();
             }
 
-            function drop(event, index) {
+            function drop(event, index, side) {
                 event.preventDefault();
-                const fromIndex = event.dataTransfer.getData('text/plain');
+                const { index: fromIndex, side: fromSide } = JSON.parse(event.dataTransfer.getData('text/plain'));
                 const shortcuts = JSON.parse(localStorage.getItem('shortcuts'));
-                const movedItem = shortcuts.splice(fromIndex, 1)[0];
-                shortcuts.splice(index, 0, movedItem);
+                const movedItem = shortcuts[fromSide].splice(fromIndex, 1)[0];
+                shortcuts[side].splice(index, 0, movedItem);
                 localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
                 loadShortcuts();
             }
@@ -222,9 +251,10 @@
                 }
             }
 
-            function openContextMenu(event, index) {
+            function openContextMenu(event, index, side) {
                 event.preventDefault();
                 contextShortcutIndex = index;
+                contextShortcutSide = side;
                 const contextMenu = document.getElementById('contextMenu');
                 contextMenu.style.top = `${event.clientY}px`;
                 contextMenu.style.left = `${event.clientX}px`;
@@ -235,6 +265,7 @@
                 const contextMenu = document.getElementById('contextMenu');
                 contextMenu.style.display = 'none';
                 contextShortcutIndex = null;
+                contextShortcutSide = null;
             }
 
             document.addEventListener('click', closeContextMenu);
@@ -244,6 +275,7 @@
                 }
             });
 
+            cacheVideo();
             loadShortcuts();
         </script>
     </body>
