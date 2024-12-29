@@ -183,28 +183,33 @@
                 top: -15px;
             }
 
-            .context-menu {
-                position: absolute;
-                background: rgba(50, 50, 50, 0.9);
-                color: white;
-                border-radius: 5px;
-                display: none;
-                flex-direction: column;
-                z-index: 10;
-                padding: 10px 0;
-                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-            }
+.context-menu {
+    position: absolute;
+    background: rgba(50, 50, 50, 0.9);
+    color: white;
+    border-radius: 5px;
+    display: none;
+    flex-direction: column;
+    z-index: 10;
+    padding: 10px 0;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+}
 
-            .context-menu-item {
-                padding: 5px 15px;
-                cursor: pointer;
-                font-size: 14px;
-                text-align: left;
-            }
+.context-menu-item {
+    padding: 5px 15px;
+    cursor: pointer;
+    font-size: 14px;
+    text-align: left;
+    transition: all 0.3s ease; /* Плавный переход для эффекта наведения */
+}
 
-            .context-menu-item:hover {
-                background: rgba(255, 255, 255, 0.1);
-            }
+.context-menu-item:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px; /* Закругленные края */
+    transform: scale(0.95); /* Уменьшение размера без изменения padding */
+}
+
+
             
             .shortcut.placeholder {
                 border: 2px dashed #aaa;
@@ -341,20 +346,26 @@
             function editShortcut() {
                 const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
                 const shortcut = shortcuts[contextShortcutSide][contextShortcutIndex];
-    
+
                 const newName = prompt('Введите новое название:', shortcut.name);
                 if (!newName || !newName.trim()) return;
-    
+
                 let newUrl = prompt('Введите новый URL:', shortcut.url);
                 if (!newUrl || !newUrl.trim()) return;
-    
+
+                // Проверяем и добавляем протокол, если его нет
+                if (!newUrl.startsWith('http://') && !newUrl.startsWith('https://')) {
+                    newUrl = 'https://' + newUrl;
+                }
+
                 shortcut.name = newName;
                 shortcut.url = newUrl;
-    
+
                 localStorage.setItem('shortcuts', JSON.stringify(shortcuts));
                 loadShortcuts();
                 closeContextMenu();
             }
+
     
             function deleteShortcut() {
                 const shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
@@ -423,7 +434,7 @@
             targetContainer.insertBefore(draggedShortcut, placeholder); // Вставляем ярлык вместо placeholder
             placeholder.remove(); // Убираем placeholder
             updateLocalStorage(); // Обновляем данные в LocalStorage
-            loadShortcuts(); // Обновляем интерфейс после изменения
+            location.reload(); // Перезагружаем страницу для устранения визуальных багов
         }
     }
 
@@ -433,7 +444,9 @@
         }
         draggedShortcut = null;
         placeholder.remove(); // Убираем placeholder при завершении
+        location.reload(); // Перезагружаем страницу для устранения визуальных багов
     }
+
 
     function updateLocalStorage() {
         const shortcutsLeft = Array.from(shortcutsContainerLeft.querySelectorAll('.shortcut:not(.add-shortcut)')).map(shortcut => ({
