@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
         <style>
             body, html {
                 margin: 0;
@@ -115,99 +116,149 @@
                 backdrop-filter: blur(10px);
             }
 
-            .settings-button {
-                position: fixed;
-                bottom: 20px;
-                right: 20px;
-                width: 60px;
-                height: 60px;
-                background-color: rgba(0, 0, 0, 0.7);
-                color: white;
-                border: none;
-                border-radius: 50%;
-                cursor: pointer;
-                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
-                font-size: 24px;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
+/* Кнопка настроек */
+.settings-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+    font-size: 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
 
-            .settings-button:hover {
-                background-color: rgba(0, 0, 0, 0.9);
-            }
+.settings-button:hover {
+    background-color: rgba(0, 0, 0, 0.9);
+    transform: scale(1.1);
+}
 
-            .settings-menu {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-color: rgba(0, 0, 0, 0.5);
-                color: white;
-                display: none;
-                justify-content: center;
-                align-items: center;
-                z-index: 100;
-            }
+/* Меню настроек */
+.settings-menu {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+}
 
-            .settings-menu.active {
-                display: flex;
-            }
+.settings-menu.active {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+}
 
-            .settings-menu-content {
-                background: rgba(0, 0, 0, 0.8);
-                border-radius: 10px;
-                padding: 60px;
-                text-align: center;
-                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
-            }
+/* Содержимое меню */
+.settings-menu-content {
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.5);
+    transform: scale(0.9);
+    animation: pop-in 0.5s ease forwards;
+}
 
-            .settings-menu-content button {
-                background-color: rgba(255, 0, 0, 0.8);
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 10px 20px;
-                font-size: 16px;
-                cursor: pointer;
-                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
-            }
+@keyframes pop-in {
+    from {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
 
-            .settings-menu-content button:hover {
-                background-color: rgba(255, 0, 0, 1);
-            }
+/* Кнопки внутри меню */
+.settings-menu-content button {
+    background-color: rgba(255, 0, 0, 0.8);
+    color: white;
+    border: none;
+    border-radius: 25px;
+    padding: 12px 25px;
+    font-size: 16px;
+    cursor: pointer;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.settings-menu-content button:hover {
+    background-color: rgba(255, 0, 0, 1);
+    transform: translateY(-3px);
+}
+
+.settings-menu-content button:active {
+    transform: translateY(0);
+}
+
+/* Плавное открытие/закрытие меню */
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
 
             test{
                 position: relative;
                 top: -15px;
             }
 
-.context-menu {
-    position: absolute;
-    background: rgba(50, 50, 50, 0.9);
-    color: white;
-    border-radius: 5px;
-    display: none;
-    flex-direction: column;
-    z-index: 10;
-    padding: 10px 0;
-    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-}
+            .context-menu {
+                position: absolute;
+                background: rgba(50, 50, 50, 0.9);
+                color: white;
+                border-radius: 5px;
+                display: none;
+                flex-direction: column;
+                z-index: 10;
+                padding: 10px 0;
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+            }
 
-.context-menu-item {
-    padding: 5px 15px;
-    cursor: pointer;
-    font-size: 14px;
-    text-align: left;
-    transition: all 0.3s ease; /* Плавный переход для эффекта наведения */
-}
+            .context-menu-item {
+                padding: 5px 15px;
+                cursor: pointer;
+                font-size: 14px;
+                text-align: left;
+                transition: all 0.3s ease; /* Плавный переход для эффекта наведения */
+            }
 
-.context-menu-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px; /* Закругленные края */
-    transform: scale(0.95); /* Уменьшение размера без изменения padding */
-}
+            .context-menu-item:hover {
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 8px; /* Закругленные края */
+                transform: scale(0.95); /* Уменьшение размера без изменения padding */
+            }
 
 
             
@@ -219,6 +270,129 @@
                 box-sizing: border-box;
             }
 
+            .weather-widget {
+                position: fixed;
+                bottom: 20px;
+                left: 20px;
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                padding: 10px 20px;
+                border-radius: 10px;
+                box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.3);
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                backdrop-filter: blur(10px);
+            }
+
+            .weather-widget img {
+                width: 40px;
+                height: 40px;
+            }
+
+            .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); /* Темный фон */
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(5px); /* Размытие для глубины */
+}
+
+.modal.active {
+    display: flex;
+    animation: fadeIn 0.3s ease-out; /* Плавное появление */
+}
+
+.modal-content {
+    background: #222; /* Темно-серый фон */
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.5); /* Глубокая тень */
+    text-align: center;
+    width: 350px;
+    animation: scaleUp 0.3s ease-out; /* Анимация увеличения */
+    color: white; /* Белый текст */
+}
+
+.modal-content h3 {
+    margin-bottom: 20px;
+    color: #fff; /* Белый заголовок */
+    font-size: 20px;
+    font-weight: 500;
+}
+
+.modal-content input {
+    width: 90%; /* Уменьшено, чтобы не выходило за границы */
+    max-width: 300px; /* Максимальная ширина поля */
+    padding: 12px;
+    margin: 0 auto 15px; /* Центровка и отступ снизу */
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    font-size: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    box-shadow: inset 0px 2px 4px rgba(0, 0, 0, 0.5);
+    display: block; /* Чтобы input не зависел от inline-стилей */
+    text-align: center; /* Центровка текста */
+    transition: all 0.2s ease;
+}
+
+
+.modal-content input::placeholder {
+    color: rgba(255, 255, 255, 0.7); /* Светлый текст для плейсхолдера */
+    font-size: 14px;
+}
+
+.modal-content input:focus {
+    outline: none;
+    border-color: #007bff; /* Синий акцент при фокусе */
+    box-shadow: 0px 0px 8px rgba(0, 123, 255, 0.5); /* Синее свечение */
+    background: rgba(255, 255, 255, 0.2); /* Немного ярче при фокусе */
+}
+
+.modal-content button {
+    padding: 12px 25px;
+    background: linear-gradient(135deg, #444, #666); /* Градиент серого */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.5); /* Легкая внешняя тень */
+}
+
+.modal-content button:hover {
+    background: linear-gradient(135deg, #555, #777); /* Более светлый серый */
+    transform: scale(1.05); /* Легкое увеличение при наведении */
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scaleUp {
+    from {
+        transform: scale(0.9);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
         </style>
     </head>
     <body>
@@ -226,6 +400,12 @@
             <source src="test.mp4" type="video/mp4">
             Ваш браузер не поддерживает видео.
         </video>
+
+        <!-- Виджет погоды -->
+        <div class="weather-widget" id="weatherWidget" oncontextmenu="openCityModal(event)">
+            Загрузка погоды...
+        </div>
+
         <div class="search-container">
             <input class="search-box" type="text" id="searchInput" placeholder="Введите запрос..." onkeydown="handleSearch(event)">
         </div>
@@ -265,6 +445,21 @@
                 settingsMenu.classList.toggle('active');
             }
     
+            document.addEventListener('click', (event) => {
+    const settingsMenu = document.getElementById('settingsMenu');
+    const settingsMenuContent = document.querySelector('.settings-menu-content');
+    const settingsButton = document.querySelector('.settings-button');
+
+    const isClickInsideContent = settingsMenuContent.contains(event.target);
+    const isClickOnButton = settingsButton.contains(event.target);
+
+    // Закрываем меню, если клик не внутри содержимого меню и не по кнопке
+    if (!isClickInsideContent && !isClickOnButton && settingsMenu.classList.contains('active')) {
+        settingsMenu.classList.remove('active');
+    }
+});
+
+
             function deleteAllShortcuts() {
                 if (confirm('Вы уверены, что хотите удалить все ярлыки?')) {
                     localStorage.removeItem('shortcuts');
@@ -488,5 +683,134 @@ loadShortcuts = (function(originalLoadShortcuts) {
 
             loadShortcuts();
         </script>
+
+
+        <!-- Модальное окно для изменения города -->
+        <div class="modal" id="cityModal">
+            <div class="modal-content">
+                <h3>Изменить город</h3>
+                <input type="text" id="cityInput" placeholder="Введите ваш город...">
+                <button onclick="saveCity()">Сохранить</button>
+            </div>
+        </div>
+
+
+<script>
+    async function fetchWeather() {
+        try {
+            let city = localStorage.getItem('city');
+
+            if (!city) {
+                const locationResponse = await fetch('https://ipapi.co/json/');
+                const locationData = await locationResponse.json();
+                city = locationData.city;
+            }
+
+            const geoResponse = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}`);
+            const geoData = await geoResponse.json();
+            if (!geoData.results || geoData.results.length === 0) {
+                throw new Error("Город не найден");
+            }
+
+            const { latitude, longitude } = geoData.results[0];
+            const weatherResponse = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true`);
+            const weatherData = await weatherResponse.json();
+            const { temperature, weathercode } = weatherData.current_weather;
+
+            const weatherIcons = {
+                0: "wi-day-sunny",
+                1: "wi-day-cloudy",
+                2: "wi-cloud",
+                3: "wi-cloudy",
+                45: "wi-fog",
+                48: "wi-fog",
+                51: "wi-sprinkle",
+                53: "wi-sprinkle",
+                55: "wi-sprinkle",
+                61: "wi-raindrops",
+                63: "wi-showers",
+                65: "wi-rain",
+                80: "wi-storm-showers",
+                81: "wi-storm-showers",
+                82: "wi-thunderstorm",
+            };
+
+            const weatherDescriptions = {
+                0: "Ясно",
+                1: "Преимущественно ясно",
+                2: "Облачно",
+                3: "Пасмурно",
+                45: "Туман",
+                48: "Осаждающий туман",
+                51: "Лёгкий моросящий дождь",
+                53: "Умеренный моросящий дождь",
+                55: "Сильный моросящий дождь",
+                61: "Лёгкий дождь",
+                63: "Умеренный дождь",
+                65: "Сильный дождь",
+                80: "Лёгкий ливень",
+                81: "Умеренный ливень",
+                82: "Сильный ливень",
+            };
+
+            const iconClass = weatherIcons[weathercode] || "wi-na";
+            const weatherDescription = weatherDescriptions[weathercode] || "Неизвестно";
+
+            const weatherWidget = document.getElementById('weatherWidget');
+            weatherWidget.innerHTML = `
+                <i class="wi ${iconClass}"></i>
+                <div>
+                    <div><strong>${city}</strong></div>
+                    <div>${temperature}°C, ${weatherDescription}</div>
+                </div>
+            `;
+        } catch (error) {
+            const weatherWidget = document.getElementById('weatherWidget');
+            weatherWidget.innerHTML = "Не удалось загрузить погоду.";
+            console.error("Ошибка загрузки данных погоды: ", error);
+        }
+    }
+
+    function saveCity() {
+        const cityInput = document.getElementById('cityInput').value;
+        if (cityInput.trim()) {
+            localStorage.setItem('city', cityInput.trim());
+            fetchWeather();
+            closeCityModal();
+        } else {
+            alert("Введите корректное название города.");
+        }
+    }
+
+    function openCityModal(event) {
+        event.preventDefault();
+        const cityModal = document.getElementById('cityModal');
+        cityModal.classList.add('active');
+    }
+
+    function closeCityModal() {
+        const cityModal = document.getElementById('cityModal');
+        cityModal.classList.remove('active');
+    }
+
+    document.addEventListener('click', (event) => {
+    const cityModal = document.getElementById('cityModal');
+    const modalContent = document.querySelector('.modal-content');
+
+    // Проверяем, активна ли модалка
+    if (cityModal.classList.contains('active')) {
+        // Проверяем, кликнут ли фон или вне содержимого модалки
+        const isClickInsideContent = modalContent.contains(event.target);
+
+        if (!isClickInsideContent) {
+            cityModal.classList.remove('active');
+        }
+    }
+});
+
+
+    fetchWeather();
+    setInterval(fetchWeather, 60 * 1000); // Интервал обновления в 1 минуту
+</script>
     </body>
 </html>
