@@ -25,7 +25,7 @@
 
             .search-container {
                 position: absolute;
-                top: 10%;
+                top: 7%;
                 left: 50%;
                 transform: translate(-50%, -50%);
                 text-align: center;
@@ -148,7 +148,7 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7); /* Темный фон */
     color: white;
     display: none;
     justify-content: center;
@@ -156,19 +156,49 @@
     z-index: 100;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.5s ease;
+    animation: fade-in-blur 0.5s ease forwards; /* Анимация при активации */
+}
+
+/* Анимация активации */
+@keyframes fade-in-blur {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(5px);
+    }
+}
+
+/* Анимация деактивации */
+@keyframes fade-out-blur {
+    from {
+        opacity: 1;
+        backdrop-filter: blur(5px);
+    }
+    to {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
 }
 
 .settings-menu.active {
     display: flex;
-    opacity: 1;
+    animation: fade-in-blur 0.5s ease forwards;
     pointer-events: auto;
+}
+
+.settings-menu.inactive {
+    animation: fade-out-blur 0.5s ease forwards;
+    pointer-events: none;
 }
 
 /* Содержимое меню */
 .settings-menu-content {
-    background: rgba(0, 0, 0, 0.8);
-    border-radius: 20px;
+    background: #222; /* Темно-серый фон */
+    border-radius: 15px;
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.5); /* Глубокая тень */
     padding: 40px;
     text-align: center;
     box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.5);
@@ -291,7 +321,7 @@
                 height: 40px;
             }
 
-            .modal {
+.modal {
     position: fixed;
     top: 0;
     left: 0;
