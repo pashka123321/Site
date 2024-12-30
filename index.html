@@ -846,6 +846,17 @@ loadShortcuts = (function(originalLoadShortcuts) {
 
 
 <script>
+
+async function translateCityName(city) {
+    try {
+        const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(city)}&langpair=en|ru`);
+        const data = await response.json();
+        return data.responseData.translatedText || city;
+    } catch (error) {
+        console.error("Ошибка перевода названия города:", error);
+        return city; // Возвращаем оригинальное название, если перевод не удался
+    }
+}
     async function fetchWeather() {
         try {
             let city = localStorage.getItem('city');
@@ -933,11 +944,13 @@ loadShortcuts = (function(originalLoadShortcuts) {
             const iconClass = weatherIcons[weathercode] || "wi-na";
             const weatherDescription = weatherDescriptions[weathercode] || "Неизвестно";
 
+            const translatedCity = await translateCityName(city);
+
             const weatherWidget = document.getElementById('weatherWidget');
             weatherWidget.innerHTML = `
                 <i class="wi ${iconClass}"></i>
                 <div>
-                    <div><strong>${city}</strong></div>
+                    <div><strong>${translatedCity}</strong></div>
                     <div>${temperature}°C, ${weatherDescription}</div>
                 </div>
             `;
