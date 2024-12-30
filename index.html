@@ -123,7 +123,7 @@
     right: 20px;
     width: 60px;
     height: 60px;
-    background-color: rgba(0, 0, 0, 0.7);
+    background-color: rgba(0, 0, 0, 0.5);
     color: white;
     border: none;
     border-radius: 50%;
@@ -304,7 +304,7 @@
                 position: fixed;
                 bottom: 20px;
                 left: 20px;
-                background: rgba(0, 0, 0, 0.7);
+                background: rgba(0, 0, 0, 0.5);
                 color: white;
                 padding: 10px 20px;
                 border-radius: 10px;
@@ -593,7 +593,7 @@
 
             document.getElementById('searchInput').addEventListener('input', showSuggestions);
 
-function saveSearchQuery(query) {
+            function saveSearchQuery(query) {
     let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
     if (!history.includes(query)) {
         history.push(query);
@@ -627,8 +627,15 @@ function showSuggestions() {
             suggestionItem.className = 'suggestion-item';
             suggestionItem.textContent = suggestion;
             suggestionItem.addEventListener('click', () => {
-                document.getElementById('searchInput').value = suggestion;
-                suggestionsContainer.style.display = 'none'; // Скрыть подсказки после выбора
+                // Вставляем подсказку в поисковую строку
+                const searchInput = document.getElementById('searchInput');
+                searchInput.value = suggestion;
+                // Сохраняем запрос
+                saveSearchQuery(suggestion);
+                // Прячем подсказки
+                suggestionsContainer.style.display = 'none';
+                // Перенаправляем на Google
+                window.location.href = `https://www.google.com/search?q=${encodeURIComponent(suggestion)}`;
             });
             suggestionsContainer.appendChild(suggestionItem);
         });
@@ -661,7 +668,6 @@ document.addEventListener('click', (event) => {
         suggestionsContainer.style.display = 'none';
     }
 });
-
 
     
             function openContextMenu(event, index, side) {
@@ -871,12 +877,25 @@ loadShortcuts = (function(originalLoadShortcuts) {
                 51: "wi-sprinkle",
                 53: "wi-sprinkle",
                 55: "wi-sprinkle",
+                56: "wi-snowflake-cold",
+                57: "wi-snowflake-cold",
                 61: "wi-raindrops",
                 63: "wi-showers",
                 65: "wi-rain",
+                66: "wi-rain-mix",
+                67: "wi-rain-mix",
+                71: "wi-snow",
+                73: "wi-snow",
+                75: "wi-snow",
+                77: "wi-snow-wind",
                 80: "wi-storm-showers",
                 81: "wi-storm-showers",
                 82: "wi-thunderstorm",
+                85: "wi-snow",
+                86: "wi-snow-wind",
+                95: "wi-thunderstorm",
+                96: "wi-thunderstorm",
+                99: "wi-thunderstorm",
             };
 
             const weatherDescriptions = {
@@ -889,13 +908,27 @@ loadShortcuts = (function(originalLoadShortcuts) {
                 51: "Лёгкий моросящий дождь",
                 53: "Умеренный моросящий дождь",
                 55: "Сильный моросящий дождь",
+                56: "Моросящий дождь с заморозками",
+                57: "Сильный моросящий дождь с заморозками",
                 61: "Лёгкий дождь",
                 63: "Умеренный дождь",
                 65: "Сильный дождь",
+                66: "Лёгкий дождь с заморозками",
+                67: "Сильный дождь с заморозками",
+                71: "Лёгкий снег",
+                73: "Умеренный снег",
+                75: "Сильный снег",
+                77: "Снежные кристаллы",
                 80: "Лёгкий ливень",
                 81: "Умеренный ливень",
                 82: "Сильный ливень",
+                85: "Лёгкий снегопад",
+                86: "Сильный снегопад",
+                95: "Гроза",
+                96: "Гроза с градом",
+                99: "Сильная гроза с градом",
             };
+
 
             const iconClass = weatherIcons[weathercode] || "wi-na";
             const weatherDescription = weatherDescriptions[weathercode] || "Неизвестно";
