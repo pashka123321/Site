@@ -423,6 +423,41 @@
     }
 }
 
+
+.suggestions-container {
+    position: absolute;
+    top: 80px; /* Расположение под строкой поиска */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 400px;
+    max-height: 200px; /* Ограничение высоты */
+    overflow: hidden; /* Скроллинг, если слишком много подсказок */
+    background: rgba(200, 200, 200, 0.9); /* Прозрачный белый фон */
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1); /* Легкая тень */
+    border-radius: 10px;
+    z-index: 10;
+    display: none; /* Скрываем по умолчанию */
+}
+
+.suggestion-item {
+    padding: 12px 15px;
+    font-size: 14px;
+    color: #333;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1); /* Линия между подсказками */
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.suggestion-item:hover {
+    background: rgba(0, 0, 0, 0.05); /* Легкий серый фон при наведении */
+    transform: scale(1.02); /* Легкое увеличение при наведении */
+}
+
+.suggestion-item:last-child {
+    border-bottom: none; /* Убираем нижнюю линию у последнего элемента */
+}
+
+
         </style>
     </head>
     <body>
@@ -439,6 +474,10 @@
         <div class="search-container">
             <input class="search-box" type="text" id="searchInput" placeholder="Введите запрос..." onkeydown="handleSearch(event)">
         </div>
+
+        <div id="suggestions" class="suggestions-container"></div>
+
+
         
         <div class="shortcuts-container" id="shortcutsContainerLeft">
             <!-- Ярлыки будут добавляться сюда -->
@@ -549,6 +588,81 @@
                     }
                 }
             }
+
+            document.getElementById('searchInput').addEventListener('input', showSuggestions);
+
+            document.getElementById('searchInput').addEventListener('input', showSuggestions);
+
+function saveSearchQuery(query) {
+    let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+    if (!history.includes(query)) {
+        history.push(query);
+        if (history.length > 50) history.shift(); // Ограничиваем историю до 50 записей
+        localStorage.setItem('searchHistory', JSON.stringify(history));
+    }
+}
+
+function showSuggestions() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const suggestionsContainer = document.getElementById('suggestions');
+    suggestionsContainer.innerHTML = ''; // Очистка старых подсказок
+
+    if (input.trim()) {
+        let history = JSON.parse(localStorage.getItem('searchHistory')) || [];
+        let shortcuts = JSON.parse(localStorage.getItem('shortcuts')) || { left: [], right: [] };
+
+        // Объединяем историю запросов и ярлыки
+        let suggestions = [
+            ...history.filter(q => q.toLowerCase().includes(input)),
+            ...shortcuts.left.filter(s => s.name.toLowerCase().includes(input)).map(s => s.name),
+            ...shortcuts.right.filter(s => s.name.toLowerCase().includes(input)).map(s => s.name)
+        ];
+
+        // Уникальные и отсортированные подсказки
+        suggestions = [...new Set(suggestions)].slice(0, 10); // Максимум 10 подсказок
+
+        // Добавляем в контейнер подсказок
+        suggestions.forEach(suggestion => {
+            const suggestionItem = document.createElement('div');
+            suggestionItem.className = 'suggestion-item';
+            suggestionItem.textContent = suggestion;
+            suggestionItem.addEventListener('click', () => {
+                document.getElementById('searchInput').value = suggestion;
+                suggestionsContainer.style.display = 'none'; // Скрыть подсказки после выбора
+            });
+            suggestionsContainer.appendChild(suggestionItem);
+        });
+
+        // Показываем контейнер с подсказками
+        suggestionsContainer.style.display = 'block';
+    } else {
+        suggestionsContainer.style.display = 'none'; // Скрываем контейнер, если ничего нет
+    }
+}
+
+// Сохранение запроса при нажатии Enter
+document.getElementById('searchInput').addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        const query = event.target.value.trim();
+        if (query) {
+            saveSearchQuery(query);
+            // Выполняем поиск
+            window.location.href = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+        }
+    }
+});
+
+// Прячем подсказки, если пользователь кликнул вне области поиска
+document.addEventListener('click', (event) => {
+    const suggestionsContainer = document.getElementById('suggestions');
+    const searchInput = document.getElementById('searchInput');
+
+    if (!searchInput.contains(event.target) && !suggestionsContainer.contains(event.target)) {
+        suggestionsContainer.style.display = 'none';
+    }
+});
+
+
     
             function openContextMenu(event, index, side) {
                 event.preventDefault();
